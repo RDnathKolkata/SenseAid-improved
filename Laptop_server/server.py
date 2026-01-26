@@ -287,6 +287,11 @@ class ObjectMemory:
             now = time.time()
             
             if track_id not in self._memory:
+
+                if len(self._memory) >= 1000:
+                    oldest_id = min(self._memory.items(), key=lambda x: x[1]['last_seen'])[0]
+                    del self._memory[oldest_id]
+                    logger.warning(f"Memory full, evicted track {oldest_id}")
                 self._memory[track_id] = {
                     "seen": True,
                     "last_distance": distance,
@@ -393,8 +398,8 @@ class DistanceEstimator:
         4. Update CAMERA_FOCAL_LENGTH_PX in .env
         """
         focal_length = (pixel_height * known_distance) / real_height
-        print(f"📐 Calibrated focal length: {focal_length:.2f} pixels")
-        print(f"💡 Add to .env: CAMERA_FOCAL_LENGTH_PX={focal_length:.2f}")
+        logger.info(f"📐 Calibrated focal length: {focal_length:.2f} pixels")
+        logger.info(f"💡 Add to .env: CAMERA_FOCAL_LENGTH_PX={focal_length:.2f}")
         return focal_length
 
 
@@ -419,7 +424,7 @@ class ESP32AlertClient:
         """Close async HTTP client"""
         if self.client:
             await self.client.aclose()
-            print("🌐 ESP32 client closed")
+            logger.info("🌐 ESP32 client closed")
     
     async def send_alert(self, obj_class: str, distance: float, alert_type: str) -> bool:
         """
@@ -463,7 +468,8 @@ class ESP32AlertClient:
     def toggle(self):
         """Toggle ESP32 alerts on/off"""
         self.enabled = not self.enabled
-        print(f"🔁 ESP32 alerts: {'ON' if self.enabled else 'OFF'}")
+        status = 'ON' if self.enabled else 'OFF'
+        logger.info(f"🌐 ESP32 alerts toggled {status}")
         return self.enabled
 
 #  BACKGROUND TASKS
@@ -474,7 +480,7 @@ async def memory_cleanup_task(memory: ObjectMemory):
         await asyncio.sleep(settings.memory_cleanup_interval)
         await memory.cleanup_stale_tracks()
         stats = await memory.get_stats()
-        print(f"📊 Memory stats: {stats}")
+        logger.info(f" Memory stats: {stats}")
 
  # Rate limiter cleanup task       
 
@@ -490,7 +496,7 @@ async def rate_limiter_cleanup_task(limiter: RateLimiter):
 async def lifespan(app: FastAPI):
     """Manage application startup and shutdown"""
     # Startup
-    print("🚀 Starting application...")
+    logger.info("🚀 Starting application...")
     
     # Initialize ESP32 client
     await app.state.esp32_client.start()
@@ -504,17 +510,17 @@ async def lifespan(app: FastAPI):
         rate_limiter_cleanup_task(app.state.rate_limiter)
     )
     
-    print("✅ Application started")
+    logger.info("✅ Application started")
     
     yield
     
     # Shutdown
-    print("🛑 Shutting down application...")
+    logger.info("🛑 Shutting down application...")
     cleanup_task.cancel()
     rate_limit_cleanup_task.cancel()
     await app.state.esp32_client.stop()
     cv2.destroyAllWindows()
-    print("✅ Application stopped")
+    logger.info("✅ Application stopped")
 
 #  FASTapi
 
@@ -528,9 +534,9 @@ app.state.display_enabled = settings.display_enabled
 app.state.rate_limiter = RateLimiter(max_requests=30, window_seconds=60)
 
 # Load YOLO model
-print(f"🧠 Loading YOLO model from {settings.yolo_model_path}...")
+logger.info(f"🧠 Loading YOLO model from {settings.yolo_model_path}...")
 model = YOLO(settings.yolo_model_path)
-print("✅ YOLO loaded")
+logger.info("✅ YOLO loaded")
 
 # Alert object classes
 ALERT_CLASSES = {
@@ -629,15 +635,15 @@ def display_frame(img_array, detections):
 #  API ENDPOINTS
 
 @app.post("/frame")
-async def receive_frame(file: UploadFile = File(...)):
+async def receive_frame(request: Request, file: UploadFile = File(...)):
+    client_ip = request.client.host
     """
     Process uploaded frame and detect objects
     
     Returns detection results and sends alerts to ESP32 if needed
     """
-# Rate limiting
-
-    client_ip = request.client.host if request else "unknown"
+    #Rate limiting
+    client_ip = request.client.host
     if not await app.state.rate_limiter.check_rate_limit(client_ip):
         raise HTTPException(
             status_code=429,
@@ -769,6 +775,9 @@ async def calibrate_camera(
     measure pixel height (e.g., 200px), then call:
     POST /calibrate?known_distance=5.0&pixel_height=200&real_height=1.5
     """
+    if known_distance <= 0 or pixel_height <= 0 or real_height <= 0:
+        raise HTTPException(400, "All values must be positive")
+    
     focal_length = app.state.distance_estimator.calibrate_focal_length(
         known_distance, pixel_height, real_height
     )
@@ -806,16 +815,16 @@ async def fall_alert(request: Request):
                 "fall_alert"
             )
             if success:
-                print(f"   ✅ Emergency alert sent to audio unit")
+                logger.info(f"   ✅ Emergency alert sent to audio unit")
             else:
-                print(f"   ⚠️  Failed to send emergency alert")
+                logger.warning(f"   ⚠️  Failed to send emergency alert")
         
-        print(" ═══════════════════════════════════════\n")
+        logger.critical(" ═══════════════════════════════════════\n")
         
         return {"success": True, "message": "Fall alert logged"}
         
     except Exception as e:
-        print(f"❌ Error processing fall alert: {e}")
+        logger.exception(f"❌ Error processing fall alert: {e}")
         return {"success": False, "error": str(e)}
     
 #  MAIN ENTRY POINT
@@ -834,19 +843,19 @@ if __name__ == "__main__":
     logger.info("="*60)
     
     if settings.display_enabled:
-        print("🎥 Video display: ENABLED")
-        print("💡 Controls: 't' = toggle ESP32 alerts, 'q' = close window")
+        logger.info("🎥 Video display: ENABLED")
+        logger.info("💡 Controls: 't' = toggle ESP32 alerts, 'q' = close window")
     else:
-        print("🎥 Video display: DISABLED")
+        logger.info("🎥 Video display: DISABLED")
     
-    print(f"📡 Server starting on http://0.0.0.0:8000")
-    print("📚 API docs: http://localhost:8000/docs")
-    print("="*60 + "\n")
+    logger.info(f"📡 Server starting on http://0.0.0.0:8000")
+    logger.info("📚 API docs: http://localhost:8000/docs")
+    logger.info("="*60 + "\n")
     
     try:
         uvicorn.run(app, host="0.0.0.0", port=8000)
     except KeyboardInterrupt:
-        print("\n🛑 Shutting down...")
+        logger.info("\n🛑 Shutting down...")
         cv2.destroyAllWindows()
 
 
