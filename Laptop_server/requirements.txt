@@ -8,7 +8,7 @@ ultralytics==8.1.0
 opencv-python==4.9.0.80
 pillow==10.2.0
 
-# Async HTTP Client (replaces requests)
+# Async HTTP Client 
 httpx==0.26.0
 
 # Configuration Management
@@ -24,3 +24,6 @@ numpy==1.26.3
 #DO NOT pip install STUFF TILL I EXPLICITLY TELL YOU TO DO SO.... EVEN requirements.txt
 #Might add more dependencies later
 #this is requirements.txt
+
+
+#pip install all imports individually #do not use this requirements.txt for now

@@ -179,6 +179,8 @@ def setup_logging():
 # Initialize logger
 logger = setup_logging()
 
+#--------------------------------------------------------------------------------------------------------------------------
+
 #  CONFIGURATION MANAGEMENT
 
 class Settings(BaseSettings):
@@ -188,7 +190,7 @@ class Settings(BaseSettings):
     yolo_model_path: str = Field(default="yolo11m.pt", env="YOLO_MODEL_PATH")
     confidence_threshold: float = Field(default=0.5, env="CONFIDENCE_THRESHOLD")
     
-    # ESP32 Configuration
+    # ESP32 configs
     esp32_audio_url: str = Field(default="http://192.168.1.100/alert", env="ESP32_AUDIO_URL")
     esp32_timeout: float = Field(default=0.5, env="ESP32_TIMEOUT")
     
@@ -196,21 +198,26 @@ class Settings(BaseSettings):
     danger_distance_m: float = Field(default=2.0, env="DANGER_DISTANCE_M")
     alert_cooldown: float = Field(default=3.0, env="ALERT_COOLDOWN")
     
-    # Camera Calibration (CRITICAL for accurate distance estimation)
+    # Camera Calibration (.env file theke ) (CRITICAL for accurate distance estimation)
     camera_focal_length_px: float = Field(default=700.0, env="CAMERA_FOCAL_LENGTH_PX")
     camera_sensor_width_mm: float = Field(default=3.68, env="CAMERA_SENSOR_WIDTH_MM")
     image_width_px: int = Field(default=640, env="IMAGE_WIDTH_PX")
     
-    # Known real-world object dimensions (height in meters)
+    # real-world object dimensions (height in meters)
     object_heights: Dict[str, float] = {
-        "car": 1.5,
-        "bus": 3.0,
-        "truck": 2.5,
-        "bicycle": 1.0,
-        "motorcycle": 1.2,
-        "train": 4.0,
-        "person": 1.7
-    }
+    "car": 1.5,
+    "bus": 3.0,
+    "truck": 2.5,
+    "bicycle": 1.0,
+    "motorcycle": 1.2,
+    "train": 4.0,
+    "person": 1.7,
+    "chair": 0.9,
+    "couch": 0.8,
+    "bench": 0.5,
+    "bed": 0.6,
+    "banana": 0.1
+}
     
     # Memory cleanup
     memory_cleanup_interval: int = Field(default=60, env="MEMORY_CLEANUP_INTERVAL")  # seconds
@@ -227,7 +234,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 #Rate limiter
-
 class RateLimiter:
     """Simple in-memory rate limiter"""
     
@@ -540,7 +546,8 @@ logger.info("✅ YOLO loaded")
 
 # Alert object classes
 ALERT_CLASSES = {
-    "car", "bicycle", "motorcycle", "bus", "truck", "train", "person"
+    "car", "bicycle", "motorcycle", "bus", "truck", "train", "person",
+    "chair", "couch", "bench", "bed", "banana"
 }
 
 #  HELPER FUNCTIONS
@@ -630,19 +637,27 @@ def display_frame(img_array, detections):
     elif key == ord('q'):
         app.state.display_enabled = False
         cv2.destroyAllWindows()
-        print("🛑 Display window closed (server still running)")
+        logger.warning("🛑 Display window closed (server still running)")
 
 #  API ENDPOINTS
 
 @app.post("/frame")
 async def receive_frame(request: Request, file: UploadFile = File(...)):
-    client_ip = request.client.host
     """
     Process uploaded frame and detect objects
     
     Returns detection results and sends alerts to ESP32 if needed
     """
-    #Rate limiting
+    # LAYER 1: Content-Type Validation
+    if not file.content_type or not file.content_type.startswith('image/'):
+        logger.warning(f"Rejected file with Content-Type: {file.content_type}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only image files accepted. Received: {file.content_type}"
+        )
+    
+    
+    # Rate Limiting
     client_ip = request.client.host
     if not await app.state.rate_limiter.check_rate_limit(client_ip):
         raise HTTPException(
@@ -652,9 +667,14 @@ async def receive_frame(request: Request, file: UploadFile = File(...)):
     
     try:
         contents = await file.read()
+        
+        # Validate size
+        if len(contents) > 10_000_000:  # 10MB
+            raise HTTPException(413, "File too large (max 10MB)")
+        
         img = Image.open(BytesIO(contents)).convert("RGB")
         
-        # Convert PIL Image to numpy array for OpenCV
+        #Convert PIL image to numpy array for OpenCV
         img_array = np.array(img)
         img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
