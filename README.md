@@ -40,7 +40,16 @@ Distance Estimation: Accurate object distance calculation <br>
 
 ## License
 
-<a href="https://github.com/RDnathKolkata/PerceptaLucis">PerceptaLucis</a> © 2026 by <a href="https://github.com/RDnathKolkata">Rajdeep Debnath</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International</a><img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/sa.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+<a href="https://github.com/RDnathKolkata/PerceptaLucis">PerceptaLucis™</a> © 2026 by
+<a href="https://github.com/RDnathKolkata">Rajdeep Debnath</a> is licensed under
+<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+</a>
+<img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" width="14" height="14" style="vertical-align: middle; margin-left: 4px;">
+<img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" width="14" height="14" style="vertical-align: middle; margin-left: 2px;">
+<img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" width="14" height="14" style="vertical-align: middle; margin-left: 2px;">
+<img src="https://mirrors.creativecommons.org/presskit/icons/sa.svg" width="14" height="14" style="vertical-align: middle; margin-left: 2px;">
+
 
 Commercial use, monetization, or deployment within paid products or services is **not permitted** without explicit written permission from the author.
 
