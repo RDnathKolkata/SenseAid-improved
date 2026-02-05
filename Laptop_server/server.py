@@ -114,6 +114,17 @@
 
 
 
+
+
+
+
+
+
+# PerceptaLucis™
+# © 2026 Rajdeep Debnath
+# CC BY-NC-SA 4.0
+
+
 from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.responses import JSONResponse
 from fastapi import HTTPException

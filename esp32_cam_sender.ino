@@ -105,6 +105,15 @@
 
 
 
+
+
+
+
+
+//  PerceptaLucis™
+//  © 2026 Rajdeep Debnath
+//  CC BY-NC-SA 4.0
+
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <HTTPClient.h>

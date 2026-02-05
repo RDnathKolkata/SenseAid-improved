@@ -28,3 +28,6 @@ numpy==1.26.3
 
 #pip install all imports individually 
 #do not use this requirements.txt for now
+# PerceptaLucis™
+# © 2026 Rajdeep Debnath
+# CC BY-NC-SA 4.0
