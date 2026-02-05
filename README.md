@@ -33,6 +33,9 @@ Distance Estimation: Accurate object distance calculation
 ## License
 
 This project is licensed under the
-Creative Commons Attribution–NonCommercial–ShareAlike 4.0 International License.
+**Creative Commons Attribution–NonCommercial–ShareAlike 4.0 International License (CC BY-NC-SA 4.0)**.
 
-Commercial use is **not permitted** without explicit permission from the author.
+Commercial use, monetization, or deployment within paid products or services is **not permitted** without explicit written permission from the author.
+
+## Purpose
+*This project exists to promote ethical, affordable accessibility technology for blind and visually impaired individuals.*
