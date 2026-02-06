@@ -79,7 +79,7 @@ Commercial use, licensing, partnerships, or deployment through commercial hubs m
 For inquiries regarding commercial permissions, collaborations, or licensing, please contact:
 
 **Rajdeep Debnath**  
-GitHub: https://github.com/RDnathKolkata
+GitHub: https://github.com/RDnathKolkata <br>
 E-Mail: [rdnathkolkata@gmail.com](mailto:rdnathkolkata@gmail.com)
 
 
